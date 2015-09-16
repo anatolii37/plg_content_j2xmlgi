@@ -5,6 +5,7 @@
 make.cmd
 CHANGELOG
 LICENSE
+.*
 
 # Windows image file caches
 Thumbs.db
@@ -24,9 +25,6 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
-
-# Make file
-make.cmd
 
 # =========================
 # Operating System Files
