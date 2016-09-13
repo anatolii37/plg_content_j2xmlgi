@@ -1,51 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension version="3" type="plugin" group="content" method="upgrade">
-	<name>PLG_CONTENT_J2XMLGI</name>
-	<author>Helios Ciancio</author>
-	<creationDate>June 2015</creationDate>
-	<copyright>(C) 2013-2015, Helios Ciancio. All rights reserved.</copyright>
-	<license>http://www.gnu.org/licenses/gpl-3.0.html GNU/GPL v3</license>
-	<authorEmail>info@eshiol.it</authorEmail>
-	<authorUrl>www.eshiol.it</authorUrl>
-	<version>3.2.22</version>
-	<description>PLG_CONTENT_J2XMLGI_XML_DESCRIPTION</description>
-	<files>
-		<filename plugin="j2xmlgi">j2xmlgi.php</filename>
-		<filename>index.html</filename>
-	</files>
-	<languages folder="language">
-		<language tag="en-GB">en-GB/en-GB.plg_content_j2xmlgi.ini</language>
-		<language tag="en-GB">en-GB/en-GB.plg_content_j2xmlgi.sys.ini</language>
-		<language tag="it-IT">it-IT/it-IT.plg_content_j2xmlgi.ini</language>
-		<language tag="it-IT">it-IT/it-IT.plg_content_j2xmlgi.sys.ini</language>
-	</languages>
-	<updateservers>
-		<server type="extension" priority="1" name="J2XML Grab Images"><![CDATA[http://www.eshiol.it/component/ars/updates/plugins/j2xml-grab-images?format=xml]]></server>
-	</updateservers>
-	<config>
-		<fields name="params">
-			<fieldset name="basic">
-				<field
-					name="action"
-					type="list"
-					default="1"
-					label="PLG_CONTENT_J2XMLGI_FIELD_ACTION_LABEL"
-					description="PLG_CONTENT_J2XMLGI_FIELD_ACTION_DESC" >
-						<option value="0">PLG_CONTENT_J2XMLGI_ACTION_NONE</option>
-						<option value="1">PLG_CONTENT_J2XMLGI_ACTION_IMPORT</option>
-						<option value="2">PLG_CONTENT_J2XMLGI_ACTION_REMOVE</option>
-				</field>
-				<field name="folder" type="folderlist" default="j2xml" 
-					label="PLG_CONTENT_J2XMLGI_FIELD_FOLDER_LABEL"
-					description="PLG_CONTENT_J2XMLGI_FIELD_FOLDER_DESC"
-					directory="images" filter="" exclude="" stripext="" hide_none="true" 
-					/>
-				<field name="subfolder" type="integer" default="0" 
-					label="PLG_CONTENT_J2XMLGI_FIELD_SUBFOLDERLENGTH_LABEL"
-					description="PLG_CONTENT_J2XMLGI_FIELD_SUBFOLDERLENGTH_DESC"
-					first="0" last="32" step="2" 
-					/>
-			</fieldset>
-		</fields>
-	</config>
- </extension>
+  <name>PLG_CONTENT_J2XMLGI</name>
+  <author>Helios Ciancio</author>
+  <creationDate>September 2016</creationDate>
+  <copyright>(C) 2013, 2016 Helios Ciancio. All rights reserved.</copyright>
+  <license>http://www.gnu.org/licenses/gpl-3.0.html GNU/GPL v3</license>
+  <authorEmail>info@eshiol.it</authorEmail>
+  <authorUrl>www.eshiol.it</authorUrl>
+  <version>3.3.23.3</version>
+  <description>PLG_CONTENT_J2XMLGI_XML_DESCRIPTION</description>
+  <files>
+    <filename plugin="j2xmlgi">j2xmlgi.php</filename>
+    <filename>index.html</filename>
+    <folder>language</folder>
+  </files>
+  <config>
+    <fields name="params">
+      <fieldset name="basic">
+        <field name="action" type="list" default="1" label="PLG_CONTENT_J2XMLGI_FIELD_ACTION_LABEL" description="PLG_CONTENT_J2XMLGI_FIELD_ACTION_DESC">
+          <option value="0">PLG_CONTENT_J2XMLGI_ACTION_NONE</option>
+          <option value="1">PLG_CONTENT_J2XMLGI_ACTION_IMPORT</option>
+          <option value="2">PLG_CONTENT_J2XMLGI_ACTION_REMOVE</option>
+        </field>
+        <field name="folder" type="folderlist" default="j2xml" label="PLG_CONTENT_J2XMLGI_FIELD_FOLDER_LABEL" description="PLG_CONTENT_J2XMLGI_FIELD_FOLDER_DESC" directory="images" filter="" exclude="" stripext="" hide_none="true"/>
+        <field name="subfolder" type="integer" default="0" label="PLG_CONTENT_J2XMLGI_FIELD_SUBFOLDERLENGTH_LABEL" description="PLG_CONTENT_J2XMLGI_FIELD_SUBFOLDERLENGTH_DESC" first="0" last="32" step="2"/>
+      </fieldset>
+    </fields>
+  </config>
+</extension>

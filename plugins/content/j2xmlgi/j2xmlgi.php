@@ -1,6 +1,6 @@
 <?php
 /**
- * @version		3.2.22 plugins/content/j2xmlgi/j2xmlgi.php
+ * @version		3.3.23 plugins/content/j2xmlgi/j2xmlgi.php
  * 
  * @package		J2XML Grab Images
  * @subpackage	plg_content_j2xmlgi
@@ -8,7 +8,7 @@
  *
  * @author		Helios Ciancio <info@eshiol.it>
  * @link		http://www.eshiol.it
- * @copyright	Copyright (C) 2013-2015 Helios Ciancio. All Rights Reserved
+ * @copyright	Copyright (C) 2013, 2016 Helios Ciancio. All Rights Reserved
  * @license		http://www.gnu.org/licenses/gpl-3.0.html GNU/GPL v3
  * J2XML is free software. This version may have been modified pursuant
  * to the GNU General Public License, and as distributed it includes or
@@ -150,8 +150,15 @@ class plgContentJ2xmlgi extends JPlugin
 				$image_path = preg_replace('/\\.[^.\\s]{3,4}$/', '', $image_path).$extension;
 			}
 			JLog::add(new JLogEntry(__FUNCTION__.' mime: '.$mime_type,JLOG::DEBUG,'plg_content_j2xmlgi'));
-			JLog::add(new JLogEntry(__FUNCTION__.' extension: '.$extension,JLOG::DEBUG,'plg_content_j2xmlgi'));
 		}
+		else
+		{
+			$extension = pathinfo($image, PATHINFO_EXTENSION);
+
+			$src = preg_replace('/\\.[^.\\s]{3,4}$/', '', $src).'.'.$extension;
+			$image_path = preg_replace('/\\.[^.\\s]{3,4}$/', '', $image_path).'.'.$extension;
+		}
+		JLog::add(new JLogEntry(__FUNCTION__.' extension: '.$extension,JLOG::DEBUG,'plg_content_j2xmlgi'));
 		JLog::add(new JLogEntry(__FUNCTION__.' img_name: '.$img_name,JLOG::DEBUG,'plg_content_j2xmlgi'));
 		JLog::add(new JLogEntry(__FUNCTION__.' src: '.$src,JLOG::DEBUG,'plg_content_j2xmlgi'));
 		JLog::add(new JLogEntry(__FUNCTION__.' image_path: '.$image_path,JLOG::DEBUG,'plg_content_j2xmlgi'));

@@ -2,10 +2,10 @@
 # Reserved files
 # =========================
 
-make.cmd
-CHANGELOG
-LICENSE
-.*
+# Eclipse
+.settings
+.buildpath
+.project
 
 # Windows image file caches
 Thumbs.db
@@ -25,6 +25,7 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
 
 # =========================
 # Operating System Files
