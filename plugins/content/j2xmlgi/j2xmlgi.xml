@@ -1,19 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension version="3" type="plugin" group="content" method="upgrade">
-  <name>PLG_CONTENT_J2XMLGI</name>
+  <name>plg_content_j2xmlgi</name>
   <author>Helios Ciancio</author>
-  <creationDate>September 2016</creationDate>
+  <creationDate>November 2016</creationDate>
   <copyright>(C) 2013, 2016 Helios Ciancio. All rights reserved.</copyright>
   <license>http://www.gnu.org/licenses/gpl-3.0.html GNU/GPL v3</license>
   <authorEmail>info@eshiol.it</authorEmail>
   <authorUrl>www.eshiol.it</authorUrl>
-  <version>3.3.23.3</version>
+  <version>3.6.26.65</version>
   <description>PLG_CONTENT_J2XMLGI_XML_DESCRIPTION</description>
+  <!-- <scriptfile>enable.php</scriptfile> -->
   <files>
     <filename plugin="j2xmlgi">j2xmlgi.php</filename>
-    <filename>index.html</filename>
-    <folder>language</folder>
   </files>
+  <languages folder="language">
+    <language tag="en-GB">en-GB/en-GB.plg_content_j2xmlgi.ini</language>
+    <language tag="en-GB">en-GB/en-GB.plg_content_j2xmlgi.sys.ini</language>
+    <language tag="it-IT">it-IT/it-IT.plg_content_j2xmlgi.ini</language>
+    <language tag="it-IT">it-IT/it-IT.plg_content_j2xmlgi.sys.ini</language>
+  </languages>
   <config>
     <fields name="params">
       <fieldset name="basic">
@@ -24,6 +29,16 @@
         </field>
         <field name="folder" type="folderlist" default="j2xml" label="PLG_CONTENT_J2XMLGI_FIELD_FOLDER_LABEL" description="PLG_CONTENT_J2XMLGI_FIELD_FOLDER_DESC" directory="images" filter="" exclude="" stripext="" hide_none="true"/>
         <field name="subfolder" type="integer" default="0" label="PLG_CONTENT_J2XMLGI_FIELD_SUBFOLDERLENGTH_LABEL" description="PLG_CONTENT_J2XMLGI_FIELD_SUBFOLDERLENGTH_DESC" first="0" last="32" step="2"/>
+        <field name="spacer_debug" type="spacer" hr="true"/>
+        <field name="debug" type="radio" default="0" class="btn-group btn-group-yesno" description="PLG_CONTENT_J2XMLGI_DEBUG_SYSTEM_DESC" label="PLG_CONTENT_J2XMLGI_DEBUG_SYSTEM_LABEL">
+          <option value="1">JYES</option>
+          <option value="0">JNO</option>
+        </field>
+        <field name="log" type="text" label="PLG_CONTENT_J2XMLGI_DEBUG_FILENAME_LABEL" description="PLG_CONTENT_J2XMLGI_DEBUG_FILENAME_DESC" default="eshiol.log.php" showon="debug:1"/>
+        <field name="phpconsole" type="radio" class="btn-group btn-group-yesno" default="0" description="PLG_CONTENT_J2XMLGI_DEBUG_PHPCONSOLE_DESC" label="PLG_CONTENT_J2XMLGI_DEBUG_PHPCONSOLE_LABEL">
+          <option value="1">JYES</option>
+          <option value="0">JNO</option>
+        </field>
       </fieldset>
     </fields>
   </config>

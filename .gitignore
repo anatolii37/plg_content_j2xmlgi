@@ -2,6 +2,10 @@
 # Reserved files
 # =========================
 
+# eshiol.it
+CHANGELOG
+LICENSE
+
 # Eclipse
 .settings
 .buildpath

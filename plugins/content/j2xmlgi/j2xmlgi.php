@@ -1,9 +1,9 @@
 <?php
 /**
- * @version		3.3.23 plugins/content/j2xmlgi/j2xmlgi.php
+ * @version		3.6.26 plugins/content/j2xmlgi/j2xmlgi.php
  * 
  * @package		J2XML Grab Images
- * @subpackage	plg_content_j2xmlgi
+ * @subpackage	PLG_CONTENT_J2XMLGI
  * @since		3.2
  *
  * @author		Helios Ciancio <info@eshiol.it>
@@ -20,7 +20,6 @@
 defined('_JEXEC') or die('Restricted access.');
 
 jimport('joomla.plugin.plugin');
-jimport('joomla.application.component.helper');
 jimport('joomla.filesystem.folder');
 
 class plgContentJ2xmlgi extends JPlugin
@@ -29,35 +28,42 @@ class plgContentJ2xmlgi extends JPlugin
 	 * Load the language file on instantiation.
 	 *
 	 * @var    boolean
-	 * @since  3.2
 	 */
 	protected $autoloadLanguage = true;
 	
 	private $_images_folder='images/j2xml/';
 	private $_images_path;
-	private $_app;
-	private $_debug;
 	
 	/**
 	 * Constructor
 	 *
 	 * @param  object  $subject  The object to observe
 	 * @param  array   $config   An array that holds the plugin configuration
-	 *
-	 * @since       3.2
 	 */
-	public function __construct(&$subject, $config)
+	function __construct(&$subject, $config)
 	{
 		parent::__construct($subject, $config);
-		
-		if (defined('JDEBUG') && JDEBUG)
+
+		if ($this->params->get('debug') || defined('JDEBUG') && JDEBUG)
 		{
-			JLog::addLogger(array('text_file' => 'eshiol.log.php'), JLog::ALL|JLog::DEBUG, array('plg_content_j2xmlgi'));
+			JLog::addLogger(array('text_file' => $this->params->get('log', 'eshiol.log.php'), 'extension' => 'plg_content_j2xmlgi_file'), JLog::ALL, array('plg_content_j2xmlgi'));
 		}
-		JLog::addLogger(array('logger' => 'messagequeue'), JLog::ALL, array('plg_content_j2xmlgi'));
-				
+		if (PHP_SAPI == 'cli')
+		{
+			JLog::addLogger(array('logger' => 'echo', 'extension' => 'plg_content_j2xmlgi'), JLOG::ALL & ~JLOG::DEBUG, array('plg_content_j2xmlgi'));
+		}
+		else
+		{
+			JLog::addLogger(array('logger' => (null !== $this->params->get('logger')) ?$this->params->get('logger') : 'messagequeue', 'extension' => 'plg_content_j2xmlgi'), JLOG::ALL & ~JLOG::DEBUG, array('plg_content_j2xmlgi'));
+			if ($this->params->get('phpconsole') && class_exists('JLogLoggerPhpconsole'))
+			{
+				JLog::addLogger(['logger' => 'phpconsole', 'extension' => 'plg_content_j2xmlgi_phpconsole'],  JLOG::DEBUG, array('plg_content_j2xmlgi'));
+			}
+		}
+		JLog::add(__METHOD__, JLOG::DEBUG, 'plg_content_j2xmlgi');
+	
 		$this->_images_folder = 'images/'.$this->params->get('folder', 'j2xml').'/';
-		$this->_images_path=JPATH_ROOT.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $this->_images_folder);
+		$this->_images_path=JPATH_ROOT.'/'.$this->_images_folder;
 	}
 	
 	/**
@@ -72,15 +78,54 @@ class plgContentJ2xmlgi extends JPlugin
 	 */
 	public function onContentBeforeSave($context, $article, $isNew)
 	{
+		JLog::add(new JLogEntry(__METHOD__, JLOG::DEBUG, 'plg_content_j2xmlgi'));
+		
 		if (($action = $this->params->get('action', 1)) == 0)
+		{
 			return true;
+		}
+		JLog::add(new JLogEntry('processing introtext', JLOG::DEBUG, 'plg_content_j2xmlgi'));
 		$this->externalImages($article->introtext, $action == 1);
+		JLog::add(new JLogEntry('processing fulltext', JLOG::DEBUG, 'plg_content_j2xmlgi'));
 		$this->externalImages($article->fulltext, $action == 1);
+		if (($images = json_decode($article->images)))
+		{
+			JLog::add(new JLogEntry('processing image_intro', JLOG::DEBUG, 'plg_content_j2xmlgi'));
+			if (preg_match("/https?:\/\/(.+)/si", $images->image_intro, $data))
+			{
+				if ($action == 1)
+				{
+					$images->image_intro = $this->importImage($images->image_intro);
+				}
+				else
+				{
+					JLog::add(new JLogEntry(JText::sprintf('PLG_CONTENT_J2XMLGI_MSG_IMAGE_REMOVED', $images->image_intro), JLOG::INFO, 'plg_content_j2xmlgi'));
+					$images->image_intro = '';
+				}
+			}
+			JLog::add(new JLogEntry('processing image_fulltext', JLOG::DEBUG, 'plg_content_j2xmlgi'));
+			if (preg_match("/https?:\/\/(.+)/si", $images->image_fulltext, $data))
+			{
+				if ($action == 1)
+				{
+					$images->image_fulltext = $this->importImage($images->image_fulltext);
+				}
+				else
+				{
+					JLog::add(new JLogEntry(JText::sprintf('PLG_CONTENT_J2XMLGI_MSG_IMAGE_REMOVED', $images->image_fulltext), JLOG::INFO, 'plg_content_j2xmlgi'));
+					$images->image_fulltext = '';
+				}
+			}
+			$article->images = json_encode($images);
+		}
+		
 		return true;
 	}
 
 	private function externalImages(&$text, $import = true)
 	{
+		JLog::add(new JLogEntry(__METHOD__, JLOG::DEBUG, 'plg_content_j2xmlgi'));
+		
 		$src = '';
 		preg_match_all("/<img .*?(?=src)src=[\"']([^\"]+)[\"'][^>]*>/si", $text, $matches);
 		if (is_array($matches) && !empty($matches))
@@ -100,7 +145,7 @@ class plgContentJ2xmlgi extends JPlugin
 						else
 						{
 							$text = str_replace($matches[0][$i], '', $text);
-							JLog::add(new JLogEntry(JText::sprintf('plg_content_j2xmlgi_MSG_IMAGE_REMOVED', $data[0][0])),JLOG::INFO,'plg_content_j2xmlgi');
+							JLog::add(new JLogEntry(JText::sprintf('PLG_CONTENT_J2XMLGI_MSG_IMAGE_REMOVED', $data[0][0]), JLOG::INFO, 'plg_content_j2xmlgi'));
 						}
 					}
 				}
@@ -111,7 +156,8 @@ class plgContentJ2xmlgi extends JPlugin
 
 	private static function getImage(&$text, &$src, &$title, &$alt)
 	{
-		JLog::add(new JLogEntry(__FUNCTION__,JLOG::DEBUG,'plg_content_j2xmlgi'));
+		JLog::add(new JLogEntry(__METHOD__, JLOG::DEBUG, 'plg_content_j2xmlgi'));
+		
 		preg_match('/<img(.*)>/i', $text, $matches);
 		if (is_array($matches) && !empty($matches))
 		{
@@ -124,32 +170,37 @@ class plgContentJ2xmlgi extends JPlugin
 	
 	private function importImage($image)
 	{
-		JLog::add(new JLogEntry(__FUNCTION__.' image: '.$image,JLOG::DEBUG,'plg_content_j2xmlgi'));
-		if (($img = @file_get_contents($image)) === FALSE) return false;
+		JLog::add(new JLogEntry(__METHOD__.' image: '.$image, JLOG::DEBUG, 'plg_content_j2xmlgi'));
+
+		if (($img = @file_get_contents($image)) === false)
+		{
+			JLog::add(new JLogEntry(JText::sprintf('PLG_CONTENT_J2XMLGI_MSG_IMAGE_DOWNLOAD_FAILED', $image), JLOG::WARNING, 'plg_content_j2xmlgi'));
+			return false;
+		}
 
 		$img_name = md5($img);
 		$parse = parse_url($img);
 		
-		JLog::add(new JLogEntry(__FUNCTION__.' subfolder: '.$this->params->get('subfolder', 0),JLOG::DEBUG,'plg_content_j2xmlgi'));
+		JLog::add(new JLogEntry(__METHOD__.' subfolder: '.$this->params->get('subfolder', 0), JLOG::DEBUG, 'plg_content_j2xmlgi'));
 		if ($n = $this->params->get('subfolder'))
 			$src = $image_path = $this->_images_folder.substr(md5($parse['host']), -$n).'/'.$img_name;
 		else 
 			$src = $image_path = $this->_images_folder.$img_name;
-		$image_path = JPATH_ROOT.DIRECTORY_SEPARATOR.$image_path;
+		$image_path = JPATH_ROOT.'/'.$image_path;
 		
-		JLog::add(new JLogEntry(__FUNCTION__.' finfo: '.class_exists('finfo'),JLOG::DEBUG,'plg_content_j2xmlgi'));
+		JLog::add(new JLogEntry(__METHOD__.' finfo: '.class_exists('finfo'), JLOG::DEBUG, 'plg_content_j2xmlgi'));
 		if (class_exists('finfo'))
 		{
 			$fi = new finfo(FILEINFO_MIME);
 			$mime_type = $fi->buffer($img);
 			$mime_type = substr($mime_type, 0, strpos($mime_type, ';'));
+			JLog::add(new JLogEntry(__METHOD__.' mime: '.$mime_type, JLOG::DEBUG, 'plg_content_j2xmlgi'));
 			
-			if (($extension = $this->get_extension($mime_type)) !== FALSE)
+			if (($extension = $this->get_extension($mime_type)) !== false)
 			{
 				$src = preg_replace('/\\.[^.\\s]{3,4}$/', '', $src).$extension;
 				$image_path = preg_replace('/\\.[^.\\s]{3,4}$/', '', $image_path).$extension;
 			}
-			JLog::add(new JLogEntry(__FUNCTION__.' mime: '.$mime_type,JLOG::DEBUG,'plg_content_j2xmlgi'));
 		}
 		else
 		{
@@ -158,14 +209,14 @@ class plgContentJ2xmlgi extends JPlugin
 			$src = preg_replace('/\\.[^.\\s]{3,4}$/', '', $src).'.'.$extension;
 			$image_path = preg_replace('/\\.[^.\\s]{3,4}$/', '', $image_path).'.'.$extension;
 		}
-		JLog::add(new JLogEntry(__FUNCTION__.' extension: '.$extension,JLOG::DEBUG,'plg_content_j2xmlgi'));
-		JLog::add(new JLogEntry(__FUNCTION__.' img_name: '.$img_name,JLOG::DEBUG,'plg_content_j2xmlgi'));
-		JLog::add(new JLogEntry(__FUNCTION__.' src: '.$src,JLOG::DEBUG,'plg_content_j2xmlgi'));
-		JLog::add(new JLogEntry(__FUNCTION__.' image_path: '.$image_path,JLOG::DEBUG,'plg_content_j2xmlgi'));
+		JLog::add(new JLogEntry(__METHOD__.' extension: '.$extension, JLOG::DEBUG, 'plg_content_j2xmlgi'));
+		JLog::add(new JLogEntry(__METHOD__.' img_name: '.$img_name, JLOG::DEBUG, 'plg_content_j2xmlgi'));
+		JLog::add(new JLogEntry(__METHOD__.' src: '.$src, JLOG::DEBUG, 'plg_content_j2xmlgi'));
+		JLog::add(new JLogEntry(__METHOD__.' image_path: '.$image_path, JLOG::DEBUG, 'plg_content_j2xmlgi'));
 		
 		if (file_exists($image_path))
 		{		
-			JLog::add(new JLogEntry(JText::sprintf('plg_content_j2xmlgi_MSG_IMAGE_IMPORTED', $image, $src),JLOG::INFO,'plg_content_j2xmlgi'));
+			JLog::add(new JLogEntry(JText::sprintf('PLG_CONTENT_J2XMLGI_MSG_IMAGE_IMPORTED', $image, $src), JLOG::INFO, 'plg_content_j2xmlgi'));
 		}
 		else
 		{
@@ -173,22 +224,22 @@ class plgContentJ2xmlgi extends JPlugin
 			{
 				if (JFolder::create($this->_images_path))
 				{
-					JLog::add(new JLogEntry(JText::sprintf('plg_content_j2xmlgi_MSG_FOLDER_WAS_SUCCESSFULLY_CREATED', $this->_images_path),JLOG::INFO,'plg_content_j2xmlgi'));
+					JLog::add(new JLogEntry(JText::sprintf('PLG_CONTENT_J2XMLGI_MSG_FOLDER_WAS_SUCCESSFULLY_CREATED', $this->_images_path), JLOG::INFO, 'plg_content_j2xmlgi'));
 				}
 				else
 				{
-					JLog::add(new JLogEntry(JText::sprintf('plg_content_j2xmlgi_MSG_ERROR_CREATING_FOLDER', $this->_images_path),JLOG::WARNING,'plg_content_j2xmlgi'));
-					return FALSE;
+					JLog::add(new JLogEntry(JText::sprintf('PLG_CONTENT_J2XMLGI_MSG_ERROR_CREATING_FOLDER', $this->_images_path),JLOG::WARNING,'plg_content_j2xmlgi'));
+					return false;
 				}
 			}
 			if (JFile::write($image_path, $img))
 			{
-				JLog::add(new JLogEntry(JText::sprintf('plg_content_j2xmlgi_MSG_IMAGE_SAVED', $image, $src),JLOG::INFO,'plg_content_j2xmlgi'));
-				JLog::add(new JLogEntry(JText::sprintf('plg_content_j2xmlgi_MSG_IMAGE_IMPORTED', $image, $src),JLOG::INFO,'plg_content_j2xmlgi'));
+				JLog::add(new JLogEntry(JText::sprintf('PLG_CONTENT_J2XMLGI_MSG_IMAGE_SAVED', $image, $src), JLOG::INFO, 'plg_content_j2xmlgi'));
+				JLog::add(new JLogEntry(JText::sprintf('PLG_CONTENT_J2XMLGI_MSG_IMAGE_IMPORTED', $image, $src), JLOG::INFO, 'plg_content_j2xmlgi'));
 			}
 			else
 			{
-				JLog::add(new JLogEntry(JText::sprintf('plg_content_j2xmlgi_MSG_IMAGE_NOT_IMPORTED', $image),JLOG::WARNING,'plg_content_j2xmlgi'));
+				JLog::add(new JLogEntry(JText::sprintf('PLG_CONTENT_J2XMLGI_MSG_IMAGE_NOT_IMPORTED', $image),JLOG::WARNING,'plg_content_j2xmlgi'));
 			}
 		}
 		return $src;
@@ -204,7 +255,8 @@ class plgContentJ2xmlgi extends JPlugin
 	 */
 	function get_extension($imagetype)
 	{
-		JLog::add(new JLogEntry(__FUNCTION__.' imagetype: '.$imagetype,JLOG::DEBUG,'plg_content_j2xmlgi'));
+		JLog::add(new JLogEntry(__METHOD__.' imagetype: '.$imagetype, JLOG::DEBUG, 'plg_content_j2xmlgi'));
+
 		switch($imagetype)
 		{
 			case 'image/bmp': return '.bmp';
